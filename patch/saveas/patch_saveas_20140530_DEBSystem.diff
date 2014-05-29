@@ -1,0 +1,17 @@
+diff --git a/sources/Adapters/DEB/System/DEBSystem.cpp b/sources/Adapters/DEB/System/DEBSystem.cpp
+index 6e86693..32e2189 100644
+--- a/sources/Adapters/DEB/System/DEBSystem.cpp
++++ b/sources/Adapters/DEB/System/DEBSystem.cpp
+@@ -52,9 +52,8 @@ void DEBSystem::Boot(int argc,char **argv) {
+ 	{
+ 		strcpy(buff,".");
+ 	}
+-	Path::SetAlias("bin",dirname(buff)) ;
+-
+-	Path::SetAlias("root","bin:..") ;
++	Path::SetAlias("bin",".") ;
++	Path::SetAlias("root",".") ;
+ 
+ #ifdef _DEBUG
+   Trace::GetInstance()->SetLogger(*(new StdOutLogger()));
+

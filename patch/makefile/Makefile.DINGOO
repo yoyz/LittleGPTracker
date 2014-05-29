@@ -1,0 +1,20 @@
+
+DEVKIT=/opt/mipsel-linux-uclibc
+DEVKIT=/opt/opendingux-toolchain/
+
+TOOLPATH=$(DEVKIT)/usr/bin
+PREFIX		:=	mipsel-linux-
+PREFIX		:=	mipsel-unknown-linux-uclibc-
+SDL_BASE = /opt/mipsel-linux-uclibc/usr/bin/
+SDL_BASE = $(DEVKIT)/usr/bin/
+
+include $(PWD)/dingoo_rules
+
+CFLAGS	:=	`$(SDL_BASE)sdl-config --cflags` -O3 -D_DEBUG -Wall -DPLATFORM_$(PLATFORM) -I$(PWD)/../sources -D__LINUX_ALSA__  -DCPP_MEMORY -fpermissive
+
+CXXFLAGS:=	$(CFLAGS) 
+
+EXTENSION:= dge
+
+LIBS	:=  -L/opt/mipsel-linux-uclibc/usr/lib -lSDL -lpthread 
+LIBDIRS	:=	$(DEKVIT)/usr/lib

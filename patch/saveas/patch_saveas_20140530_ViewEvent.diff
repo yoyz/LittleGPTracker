@@ -1,0 +1,18 @@
+diff --git a/sources/Application/Views/BaseClasses/ViewEvent.h b/sources/Application/Views/BaseClasses/ViewEvent.h
+index afa0432..151760c 100644
+--- a/sources/Application/Views/BaseClasses/ViewEvent.h
++++ b/sources/Application/Views/BaseClasses/ViewEvent.h
+@@ -5,9 +5,9 @@
+ 
+ enum ViewEventType {
+ 	VET_SWITCH_VIEW,
+-	VET_PLAYER_POSITION_UPDATE, 
+-	VET_LIST_SELECT,
+-	VET_QUIT_PROJECT,
++	VET_PLAYER_POSITION_UPDATE, 	
++	VET_SAVEAS_PROJECT,
++	VET_QUIT_PROJECT,	
+ 	VET_UPDATE,
+ 	VET_QUIT_APP
+ } ;
+

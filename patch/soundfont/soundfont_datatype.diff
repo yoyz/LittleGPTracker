@@ -1,0 +1,30 @@
+--- LittleGPTracker/sources/Externals/Soundfont/DATATYPE.H      2014-05-29 16:39:13.000000000 +0200
++++ LittleGPTracker.20140529/sources/Externals/Soundfont/DATATYPE.H     2014-05-29 17:18:03.000000000 +0200
+@@ -87,6 +87,7 @@
+ typedef char                CHAR;      /*  8 bit signed value          */
+ typedef short               SHORT;     /* 16 bit signed value was: INT */
+
++
+ #ifdef EMU_WINDOWS
+   /*****************************************************************
+   * These idiosyncratic pointer definitions for memory allocations
+@@ -137,13 +138,13 @@
+   #error <datatype.h>: short is out of range!
+ #endif
+
+-#if (LONG_MAX != LONG_MAXVAL)
+-  #error <datatype.h>: long is out of range!
+-#endif
+-
+-#if (ULONG_MAX != DWORD_MAXVAL)
+-  #error <datatype.h>: unsigned long is out of range!
+-#endif
++//#if (LONG_MAX != LONG_MAXVAL)
++//#error <datatype.h>: long is out of range!
++//#endif
++
++//#if (ULONG_MAX != DWORD_MAXVAL)
++//  #error <datatype.h>: unsigned long is out of range!
++//#endif
+
+ #ifdef __BYTE_COHERENT

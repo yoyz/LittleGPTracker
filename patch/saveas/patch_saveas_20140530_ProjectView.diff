@@ -1,0 +1,170 @@
+diff --git a/sources/Application/Views/ProjectView.cpp b/sources/Application/Views/ProjectView.cpp
+index 573b940..6064191 100644
+--- a/sources/Application/Views/ProjectView.cpp
++++ b/sources/Application/Views/ProjectView.cpp
+@@ -6,13 +6,85 @@
+ #include "System/System/System.h"
+ #include "Services/Midi/MidiService.h"
+ #include "Application/Views/ModalDialogs/MessageBox.h"
+-
+-#define ACTION_PURGE MAKE_FOURCC('P','U','R','G')
+-#define ACTION_SAVE  MAKE_FOURCC('S','A','V','E')
+-#define ACTION_LOAD  MAKE_FOURCC('L','O','A','D')
+-#define ACTION_QUIT  MAKE_FOURCC('Q','U','I','T')
++#include "Application/Views/ModalDialogs/NewProjectDialog.h"
++#include "Application/Views/ModalDialogs/SelectProjectDialog.h"
++
++#define ACTION_PURGE            MAKE_FOURCC('P','U','R','G')
++#define ACTION_SAVE             MAKE_FOURCC('S','A','V','E')
++#define ACTION_SAVE_AS          MAKE_FOURCC('S','V','A','S')
++#define ACTION_LOAD             MAKE_FOURCC('L','O','A','D')
++#define ACTION_QUIT             MAKE_FOURCC('Q','U','I','T')
+ #define ACTION_PURGE_INSTRUMENT MAKE_FOURCC('P','R','G','I')
+-#define ACTION_TEMPO_CHANGED MAKE_FOURCC('T','E','M','P')
++#define ACTION_TEMPO_CHANGED    MAKE_FOURCC('T','E','M','P')
++
++
++
++static void SaveAsProjectCallback(View &v,ModalView &dialog) {
++    bool copyOk=true;
++    FileSystemService FSS;
++    NewProjectDialog &npd=(NewProjectDialog &)dialog ;
++    
++    // npd.GetName will store the new project name
++    if (dialog.GetReturnCode()>0) {
++      std::string str_dstprjdir=npd.GetName();
++      std::string str_dstsmpdir=npd.GetName()+"/samples";
++
++      Path path_dstprjdir = Path(str_dstprjdir.c_str());
++      Path path_dstsmpdir = Path(str_dstsmpdir.c_str());
++      Path path_srcprjdir("project:");
++      Path path_srcsmpdir("project:samples");
++
++      Path path_srclgptdatsav=path_srcprjdir.GetPath()+"lgptsav.dat";
++      Path path_dstlgptdatsav=path_dstprjdir.GetPath()+"/lgptsav.dat";
++
++      // Create Dir if not Exist 
++      if (path_dstprjdir.Exists()) {
++	Trace::Log("FS","Save As : Dst Dir Exist, replacing content");
++      } else {
++	Trace::Log("FS","Save As : Dst Dir Does not Exist, creating save as directory ");
++	Result result = FileSystem::GetInstance()->MakeDir(path_dstprjdir.GetPath().c_str()) ;
++	RETURN_IF_FAILED_MESSAGE(result,"Failed to create project dir");
++	result = FileSystem::GetInstance()->MakeDir(path_dstsmpdir.GetPath().c_str()) ;
++	RETURN_IF_FAILED_MESSAGE(result,"Failed to create sample dir");
++      }
++      
++      // Copy lgptdat file from source dir to the dest directory
++      if (FSS.Copy(path_srclgptdatsav,path_dstlgptdatsav)<=0) {	
++	Trace::Log("FS","Copying lgptdat.sav file failed ");
++	copyOk=false;	  
++      }
++	
++      // Copy all sample file from source dir to the dest directory
++      I_Dir *idir_srcsmpdir=FileSystem::GetInstance()->Open(path_srcsmpdir.GetPath().c_str()) ;
++      if (idir_srcsmpdir) {
++	idir_srcsmpdir->GetContent("*") ;
++	idir_srcsmpdir->Sort() ;
++	IteratorPtr<Path>it(idir_srcsmpdir->GetIterator()) ;
++	for (it->Begin();!it->IsDone();it->Next()) {
++	  Path &current=it->CurrentItem() ;
++	  if (current.IsFile()) {
++	    Path dstfile = Path(str_dstsmpdir+"/"+current.GetName());
++	    Path srcfile = Path(current.GetPath());
++	    //check if the copy was done
++	    //Try to fallback to srcprjdir with log if it failed
++	    if (FSS.Copy(srcfile.GetPath(),dstfile.GetPath())==-1) {
++	      Trace::Log("FS","copying sample failed");
++	      path_dstprjdir=path_srcprjdir;
++	      copyOk=false;
++	      break;
++	    }
++	  }	  
++	}
++      }
++      //copy worked => go to the new project,       
++      //other case  => project screen
++      if (copyOk)
++	((ProjectView &)v).OnSaveAsProject(str_dstprjdir.c_str()) ;
++      else
++	return;
++    }
++}
++
+ 
+ static void LoadCallback(View &v,ModalView &dialog) {
+ 	if (dialog.GetReturnCode()==MBL_YES) {
+@@ -75,6 +147,11 @@ ProjectView::ProjectView(GUIWindow &w,ViewData *data):FieldView(w,data) {
+ 	a1->AddObserver(*this) ;
+ 	T_SimpleList<UIField>::Insert(a1) ;
+ 
++	position._y+=1 ;
++	a1=new UIActionField("Save As",ACTION_SAVE_AS,position) ;
++	a1->AddObserver(*this) ;
++	T_SimpleList<UIField>::Insert(a1) ;
++
+ 	v=project_->FindVariable(VAR_MIDIDEVICE) ;
+ 	NAssert(v) ;
+ 	position._y+=2 ;
+@@ -86,6 +163,8 @@ ProjectView::ProjectView(GUIWindow &w,ViewData *data):FieldView(w,data) {
+ 	a1->AddObserver(*this) ;
+ 	T_SimpleList<UIField>::Insert(a1) ;
+ 
++
++
+ }
+ 
+ ProjectView::~ProjectView() {
+@@ -169,6 +248,20 @@ void ProjectView::Update(Observable &,I_ObservableData *data) {
+ 				DoModal(mb) ;
+ 			}
+ 			break ;
++		case ACTION_SAVE_AS:
++			if (!player->IsRunning()) {
++				PersistencyService *service=PersistencyService::GetInstance() ;
++				service->Save() ;
++				//MessageBox *mb=new MessageBox(*this,"Load song and lose changes ?",MBBF_YES|MBBF_NO) ;
++				NewProjectDialog *mb=new NewProjectDialog(*this) ;
++				DoModal(mb,SaveAsProjectCallback) ;
++
++			} else {
++				MessageBox *mb=new MessageBox(*this,"Not while playing",MBBF_OK) ;
++				DoModal(mb) ;
++			}
++			break ;
++
+ 		case ACTION_LOAD:
+ 		{
+ 			if (!player->IsRunning()) {
+@@ -211,8 +304,18 @@ void ProjectView::OnLoadProject() {
+ 	NotifyObservers(&ve) ;
+ } ;
+ 
++
++void ProjectView::OnSaveAsProject(char * data) {
++        ViewEvent ve(VET_SAVEAS_PROJECT,data) ;
++	SetChanged();
++	NotifyObservers(&ve) ;
++} ;
++
++
+ void ProjectView::OnQuit() {
+ 	ViewEvent ve(VET_QUIT_APP) ;
+ 	SetChanged();
+ 	NotifyObservers(&ve) ;
+ } ;
++
++
+diff --git a/sources/Application/Views/ProjectView.h b/sources/Application/Views/ProjectView.h
+index d48a1d7..1f9474c 100644
+--- a/sources/Application/Views/ProjectView.h
++++ b/sources/Application/Views/ProjectView.h
+@@ -21,6 +21,7 @@ public:
+ 	void Update(Observable &,I_ObservableData *) ;
+ 
+ 	void OnLoadProject() ;
++	void OnSaveAsProject(char * data) ;
+ 	void OnPurgeInstruments(bool removeFromDisk) ;
+ 	void OnQuit() ;
+ 
+

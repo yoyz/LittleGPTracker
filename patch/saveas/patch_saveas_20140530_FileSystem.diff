@@ -1,0 +1,60 @@
+--- LittleGPTracker/sources/System/FileSystem/FileSystem.cpp	2014-05-29 16:44:42.000000000 +0200
++++ LittleGPTracker.new/sources/System/FileSystem/FileSystem.cpp	2014-05-29 16:36:06.000000000 +0200
+@@ -179,3 +179,43 @@
+ void Path::Alias::SetPath(const char *path) {
+ 	path_=path ;
+ } ;
++
++int FileSystemService::Copy(const Path &src,const Path &dst)
++{
++  int  bufsize=4096;
++  char buffer[bufsize];
++  int  count=0;
++  int  nbwrite=-1;
++
++  FileSystem * fs=FileSystem::GetInstance() ;
++  I_File     * isrc=fs->Open(src.GetPath().c_str(),"r");
++  I_File     * idst=fs->Open(dst.GetPath().c_str(),"w");
++  
++  Trace::Log("FS","FileSystemService::Copy ");
++  Trace::Log("FS",src.GetPath().c_str());
++  Trace::Log("FS",dst.GetPath().c_str());
++  if (isrc)
++    Trace::Log("FS","src open ok");
++  else { 
++    Trace::Log("FS","src open fail");
++    return nbwrite;
++  }
++  if (idst)
++    Trace::Log("FS","dst open ok");
++  else {
++    Trace::Log("FS","dst open fail");
++    return nbwrite;
++  }
++
++
++  while (count=isrc->Read(buffer,sizeof(char),bufsize))
++    {
++      idst->Write(buffer,sizeof(char),count);
++      nbwrite++;
++    }
++
++  isrc->Close();
++  idst->Close();
++  return nbwrite;
++}
++
+--- LittleGPTracker/sources/System/FileSystem/FileSystem.h	2014-05-29 16:44:42.000000000 +0200
++++ LittleGPTracker.new/sources/System/FileSystem/FileSystem.h	2014-05-29 16:36:06.000000000 +0200
+@@ -108,4 +108,11 @@
+ 
+ #define FS_FOPEN(a,b) FileSystem::GetInstance()->Open(a,b)
+ 
++
++class FileSystemService {
++ public:
++  int Copy(const Path &src,const Path &dst);
++};
++
+ #endif
++
