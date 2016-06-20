@@ -1,0 +1,19 @@
+
+DEVKIT=/opt/gcw0-toolchain/
+
+TOOLPATH=$(DEVKIT)/usr/bin
+PREFIX		:=	mipsel-linux-
+SDL_BASE = /opt/mipsel-linux-uclibc/usr/bin/
+
+include $(PWD)/gcwzero_rules
+
+#CFLAGS	:=	`$(SDL_BASE)sdl-config --cflags` -O3 -D_DEBUG -Wall -DPLATFORM_$(PLATFORM) -I$(PWD)/../sources -D__LINUX_ALSA__  -DCPP_MEMORY
+CFLAGS	:=	`/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/bin/sdl-config --cflags` -O3 -D_DEBUG -Wall -DPLATFORM_$(PLATFORM) -I$(PWD)/../sources -D__LINUX_ALSA__  -DCPP_MEMORY
+
+CXXFLAGS:=	$(CFLAGS)
+
+EXTENSION:= dge
+
+#LIBS	:=  -L/opt/mipsel-linux-uclibc/usr/lib -lSDL -lpthread 
+LIBS	:=  -L$(DEVKIT)/lib -lSDL -lpthread 
+#LIBDIRS	:=	$(DEKVIT)/usr/lib
